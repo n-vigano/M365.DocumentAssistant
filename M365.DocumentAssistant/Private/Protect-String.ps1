@@ -1,0 +1,4 @@
+function Protect-String {
+  [CmdletBinding()] param([Parameter(Mandatory)][string]$PlainText,[ValidateSet('DPAPIUser','CMS')][string]$Algorithm='DPAPIUser',[string]$CertificateThumbprint)
+  if ($Algorithm -eq 'CMS') { if (-not $CertificateThumbprint){ throw 'CertificateThumbprint required for CMS' }; $cert = Get-Item -Path Cert:\\CurrentUser\\My\\$CertificateThumbprint -ErrorAction SilentlyContinue; if (-not $cert){ $cert = Get-Item -Path Cert:\\LocalMachine\\My\\$CertificateThumbprint -ErrorAction SilentlyContinue }; if (-not $cert){ throw "Certificate $CertificateThumbprint not found" }; $enc = Protect-CmsMessage -To $cert -Content $PlainText; return @{ value=$enc; alg='CMS'; thumbprint=$CertificateThumbprint } } else { $sec = ConvertTo-SecureString -String $PlainText -AsPlainText -Force; $enc = ConvertFrom-SecureString -SecureString $sec; return @{ value=$enc; alg='DPAPIUser' } }
+}
